@@ -2,47 +2,47 @@
 
 - name: Install python virtualenv
   package:
-    name: "{{ venv_package_name }}"
+    name: "{{ python_venv_package_name }}"
 
 - name: Check if venv directory exists
   stat:
-    path: "{{ venv_directory }}"
-  register: venv_directory_stat
+    path: "{{ python_venv_directory }}"
+  register: python_venv_directory_stat
 
 - name: Check if python executable exists
   stat:
-    path: "{{ venv_directory }}/bin/python"
+    path: "{{ python_venv_directory }}/bin/python"
     # The python executable in a venv is a symlink, follow it
     follow: true
-  register: venv_python_stat
-  when: venv_directory_stat.stat.exists and venv_directory_stat.stat.isdir
+  register: python_venv_python_stat
+  when: python_venv_directory_stat.stat.exists and python_venv_directory_stat.stat.isdir
 
 - name: Check if pip in the venv still works
   command:
-    cmd: "{{ venv_directory }}/bin/pip list"
+    cmd: "{{ python_venv_directory }}/bin/pip list"
   check_mode: false
   changed_when: false
   failed_when: false
-  register: venv_pip_result
-  when: venv_directory_stat.stat.exists and venv_directory_stat.stat.isdir
+  register: python_venv_pip_result
+  when: python_venv_directory_stat.stat.exists and python_venv_directory_stat.stat.isdir
 
 # As the python executable in a venv is a symlink to /usr/bin/pythonX.XX, it will break if the system python is upgraded
 - name: Remove old venv if it is invalid
   file:
-    path: "{{ venv_directory }}"
+    path: "{{ python_venv_directory }}"
     state: absent
-  when: venv_directory_stat.stat.exists and (not (venv_python_stat.stat.exists and venv_python_stat.stat.executable) or venv_pip_result.rc == 1)
+  when: python_venv_directory_stat.stat.exists and (not (python_venv_python_stat.stat.exists and python_venv_python_stat.stat.executable) or python_venv_pip_result.rc == 1)
 
 - name: Install requirements from package list
   pip:
-    virtualenv: "{{ venv_directory }}"
-    name: "{{ venv_modules }}"
-  notify: "{{ venv_handlers_to_notify }}"
-  when: venv_modules is defined
+    virtualenv: "{{ python_venv_directory }}"
+    name: "{{ python_venv_modules }}"
+  notify: "{{ python_venv_handlers_to_notify }}"
+  when: python_venv_modules is defined
 
 - name: Install requirements from requirements file
   pip:
-    virtualenv: "{{ venv_directory }}"
-    requirements: "{{ venv_requirements_file }}"
-  notify: "{{ venv_handlers_to_notify }}"
-  when: venv_requirements_file is defined
+    virtualenv: "{{ python_venv_directory }}"
+    requirements: "{{ python_venv_requirements_file }}"
+  notify: "{{ python_venv_handlers_to_notify }}"
+  when: python_venv_requirements_file is defined
